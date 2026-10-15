@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ title }} | HCG Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('stylesheet', v=css_version) }}">
+</head>
+<body class="guest">
+  <div class="bg-orbs" aria-hidden="true"><i></i><i></i><i></i></div>
+  <main class="content">
+    <section class="glass card error-card">
+      <p class="eyebrow">{{ 'ต้องตั้งค่าระบบ' if code == 503 else 'ข้อผิดพลาด ' ~ code }}</p>
+      <h1>{{ title }}</h1>
+      {% if messages %}
+      <ul class="error-list">
+        {% for m in messages %}<li>{{ m }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      {% if hint %}<p class="muted">{{ hint }}</p>{% endif %}
+      <a class="btn primary" href="{{ url_for('index') }}">กลับหน้าหลัก</a>
+    </section>
+  </main>
+</body>
+</html>
