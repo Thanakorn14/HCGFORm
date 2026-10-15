@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#efe8ff">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}HCG Form{% endblock %} | HCG Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('stylesheet', v=css_version) }}">
+</head>
+<body class="{{ 'app' if g.user else 'guest' }}">
+  <div class="bg-orbs" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  {% if g.user %}
+  {% set ep = request.endpoint or '' %}
+  {% if staff %}
+    {% set links = [
+      ('admin_dashboard', 'ภาพรวม', ('admin_dashboard',)),
+      ('admin_forms', 'แบบฟอร์ม', ('admin_form',)),
+      ('admin_submissions', 'คำขออนุมัติ', ('admin_submissions', 'admin_review')),
+      ('admin_timeline', 'ไทม์ไลน์', ('admin_timeline',))
+    ] %}
+  {% else %}
+    {% set links = [
+      ('home', 'แบบฟอร์ม', ('home', 'fill_form')),
+      ('history', 'ประวัติการส่ง', ('history', 'view_submission'))
+    ] %}
+  {% endif %}
+
+  <header class="topbar glass">
+    <a class="brand" href="{{ url_for('index') }}">HCG <b>Form</b></a>
+    <div class="topbar-right">
+      <span class="topbar-user">{{ g.user.username }}</span>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn ghost sm" type="submit">ออกจากระบบ</button>
+      </form>
+    </div>
+  </header>
+
+  <aside class="sidebar glass">
+    <a class="brand" href="{{ url_for('index') }}">HCG <b>Form</b></a>
+    <nav class="nav" aria-label="เมนูหลัก">
+      {% for endpoint, label, prefixes in links %}
+        <a href="{{ url_for(endpoint) }}" class="{{ 'active' if ep.startswith(prefixes) }}">
+          <span>{{ label }}</span>
+          {% if endpoint == 'admin_submissions' and pending_count %}<span class="nav-count">{{ pending_count }}</span>{% endif %}
+        </a>
+      {% endfor %}
+    </nav>
+    <div class="me">
+      <div class="avatar">{{ g.user.username[:1]|upper }}</div>
+      <div class="me-meta">
+        <strong>{{ g.user.username }}</strong>
+        <small>{{ role_label(g.user.role) }}</small>
+      </div>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn ghost sm" type="submit">ออกจากระบบ</button>
+      </form>
+    </div>
+  </aside>
+  {% endif %}
+
+  <main class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-wrap" role="status">
+        {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+  (function () {
+    document.addEventListener("submit", function (e) {
+      var form = e.target;
+      var msg = form.getAttribute("data-confirm");
+      if (msg && !window.confirm(msg)) { e.preventDefault(); return; }
+      if (e.defaultPrevented) return;
+      setTimeout(function () {
+        form.querySelectorAll("button[type=submit]").forEach(function (b) { b.disabled = true; });
+      }, 0);
+    });
+    window.addEventListener("pageshow", function () {
+      document.querySelectorAll("button[type=submit]").forEach(function (b) { b.disabled = false; });
+    });
+    document.querySelectorAll("[data-toggle-pass]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var input = btn.parentElement.querySelector("input");
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "ซ่อน" : "แสดง";
+      });
+    });
+  })();
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+    </html>
