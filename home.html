@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}แบบฟอร์ม{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">สวัสดี {{ g.user.username }}</p>
+    <h1>แบบฟอร์มที่เปิดให้กรอก</h1>
+  </div>
+</div>
+
+{% if forms %}
+<div class="grid cards">
+  {% for f in forms %}
+  {% set s = latest.get(f.id) %}
+  <article class="glass card form-card">
+    <div class="form-card-top">
+      {% if s %}<span class="pill {{ s.status }}">{{ status_label(s.status) }}</span>
+      {% else %}<span class="pill soft">ยังไม่ได้กรอก</span>{% endif %}
+    </div>
+    <h3>{{ f.title }}</h3>
+    {% if f.description %}<p class="muted clamp">{{ f.description }}</p>{% endif %}
+    <div class="form-actions">
+      {% if not s %}
+        <a class="btn primary" href="{{ url_for('fill_form', form_id=f.id) }}">กรอกแบบฟอร์ม</a>
+      {% elif s.status == 'pending' %}
+        <button class="btn status-btn pending" type="button" disabled>กำลังรออนุมัติ</button>
+        <a class="btn ghost" href="{{ url_for('view_submission', sid=s.id) }}">ดูคำตอบ</a>
+      {% elif s.status == 'approved' %}
+        <button class="btn status-btn approved" type="button" disabled>อนุมัติ</button>
+        <a class="btn ghost" href="{{ url_for('view_submission', sid=s.id) }}">ดูลิงก์ขั้นต่อไป</a>
+      {% else %}
+        <button class="btn status-btn rejected" type="button" disabled>ไม่อนุมัติ</button>
+        <a class="btn ghost" href="{{ url_for('view_submission', sid=s.id) }}">ดูปัญหา</a>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="glass card empty-state">
+  <h3>ยังไม่มีแบบฟอร์ม</h3>
+  <p class="muted">เมื่อผู้ดูแลระบบเพิ่มแบบฟอร์ม จะแสดงที่หน้านี้</p>
+</section>
+{% endif %}
+{% endblock %}
