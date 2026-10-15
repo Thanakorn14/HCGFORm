@@ -1,0 +1,7 @@
+.env
+hcg.db
+secret.key
+__pycache__/
+.venv/
+venv/
+.vercel/
