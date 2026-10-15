@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}ประวัติการส่ง{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">บัญชีของฉัน</p>
+    <h1>ประวัติการส่งแบบฟอร์ม</h1>
+  </div>
+</div>
+
+<section class="glass card">
+  {% if rows %}
+  <div class="table-scroll">
+    <table class="data responsive">
+      <thead><tr><th>แบบฟอร์ม</th><th>ส่งเมื่อ</th><th>สถานะ</th><th></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td data-label="แบบฟอร์ม">{{ r.title }}{% if r.is_deleted %} <span class="muted small">(ถูกลบแล้ว)</span>{% endif %}</td>
+          <td data-label="ส่งเมื่อ">{{ r.created_at|thtime }}</td>
+          <td data-label="สถานะ"><span class="pill {{ r.status }}">{{ status_label(r.status) }}</span></td>
+          <td class="td-action"><a class="btn ghost sm" href="{{ url_for('view_submission', sid=r.id) }}">ดูคำตอบ</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3>ยังไม่มีประวัติการส่ง</h3>
+    <a class="btn primary" href="{{ url_for('home') }}">ไปหน้าแบบฟอร์ม</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
