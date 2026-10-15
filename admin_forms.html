@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}จัดการแบบฟอร์ม{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">จัดการ</p>
+    <h1>แบบฟอร์มทั้งหมด</h1>
+  </div>
+  <a class="btn primary" href="{{ url_for('admin_form_new') }}">สร้างแบบฟอร์มใหม่</a>
+</div>
+
+{% if forms %}
+<div class="grid cards">
+  {% for f in forms %}
+  <article class="glass card form-card">
+    <div class="form-card-top">
+      <span class="pill soft">{{ f.qcount }} คำถาม</span>
+      {% if f.pcount %}<span class="pill pending">รออนุมัติ {{ f.pcount }}</span>{% endif %}
+    </div>
+    <h3>{{ f.title }}</h3>
+    {% if f.description %}<p class="muted clamp">{{ f.description }}</p>{% endif %}
+    <p class="muted small">สร้างโดย {{ f.creator or '-' }} เมื่อ {{ f.created_at|thtime }}<br>ส่งแล้ว {{ f.scount }} ครั้ง</p>
+
+    <details class="q-preview">
+      <summary>ดูคำถามในแบบฟอร์ม</summary>
+      <ol>
+        {% for q in questions.get(f.id, []) %}
+        <li>
+          <span class="pre">{{ q.text }}</span>
+          <small class="muted">{{ qtype_label(q.qtype) }}{% if q.required %} / จำเป็น{% endif %}{% if q.options %} / {{ q.options|join(', ') }}{% endif %}</small>
+        </li>
+        {% endfor %}
+      </ol>
+    </details>
+
+    <div class="form-actions">
+      <a class="btn ghost sm" href="{{ url_for('admin_submissions', form=f.id, status='all') }}">ดูคำขอ</a>
+      <form method="post" action="{{ url_for('admin_form_delete', form_id=f.id) }}" data-confirm="ยืนยันการลบแบบฟอร์มนี้ ผู้ใช้งานจะไม่เห็นแบบฟอร์มนี้อีก">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn danger sm" type="submit">ลบแบบฟอร์ม</button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="glass card empty-state">
+  <h3>ยังไม่มีแบบฟอร์ม</h3>
+  <p class="muted">เริ่มสร้างแบบฟอร์มแรกให้ผู้ใช้งานกรอก</p>
+  <a class="btn primary" href="{{ url_for('admin_form_new') }}">สร้างแบบฟอร์ม</a>
+</section>
+{% endif %}
+{% endblock %}
