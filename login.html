@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}เข้าสู่ระบบ{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <section class="auth-hero">
+    <p class="eyebrow">HCG Form</p>
+    <h1>ระบบแบบฟอร์มออนไลน์<br>ติดตามผลได้ทุกขั้นตอน</h1>
+    <p class="lead">กรอกแบบฟอร์ม ตรวจสอบสถานะการอนุมัติ และรับลิงก์ขั้นตอนถัดไปได้ในที่เดียว</p>
+    <ol class="steps">
+      <li><b>1</b><div><strong>สร้างบัญชี</strong><span>ยืนยันตัวตนด้วยรหัสจากรูปภาพ</span></div></li>
+      <li><b>2</b><div><strong>กรอกแบบฟอร์ม</strong><span>ตอบคำถามและส่งให้ผู้ดูแลตรวจสอบ</span></div></li>
+      <li><b>3</b><div><strong>รับผลการพิจารณา</strong><span>ทราบผลพร้อมลิงก์ขั้นตอนถัดไป</span></div></li>
+    </ol>
+  </section>
+
+  <section class="auth-card glass">
+    <div>
+      <h2>เข้าสู่ระบบ</h2>
+      <p class="muted">เลือกเข้าสู่ระบบด้วยชื่อไอดีหรืออีเมล</p>
+    </div>
+    <form method="post" class="stack" autocomplete="on">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div class="segmented" role="radiogroup" aria-label="วิธีเข้าสู่ระบบ">
+        <input type="radio" name="login_type" id="lt-user" value="username" {% if login_type == 'username' %}checked{% endif %}>
+        <label for="lt-user">ชื่อไอดี</label>
+        <input type="radio" name="login_type" id="lt-email" value="email" {% if login_type == 'email' %}checked{% endif %}>
+        <label for="lt-email">อีเมล</label>
+      </div>
+      <div class="field">
+        <label for="identifier" id="identifier-label">ชื่อไอดี</label>
+        <input type="text" name="identifier" id="identifier" value="{{ identifier }}" maxlength="120" required>
+      </div>
+      <div class="field">
+        <label for="password">รหัสผ่าน</label>
+        <div class="pass-wrap">
+          <input type="password" name="password" id="password" required maxlength="128" autocomplete="current-password">
+          <button type="button" class="pass-toggle" data-toggle-pass>แสดง</button>
+        </div>
+      </div>
+      <button class="btn primary block" type="submit">เข้าสู่ระบบ</button>
+    </form>
+    <p class="muted center switch-link">ยังไม่มีบัญชี <a href="{{ url_for('register') }}">สร้างบัญชีใหม่</a></p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var input = document.getElementById("identifier");
+  var label = document.getElementById("identifier-label");
+  var emailRadio = document.getElementById("lt-email");
+  function sync() {
+    var isEmail = emailRadio.checked;
+    label.textContent = isEmail ? "อีเมล" : "ชื่อไอดี";
+    input.type = isEmail ? "email" : "text";
+    input.placeholder = isEmail ? "name@example.com" : "ชื่อไอดีของคุณ";
+    input.autocomplete = isEmail ? "email" : "username";
+  }
+  document.querySelectorAll("input[name=login_type]").forEach(function (r) {
+    r.addEventListener("change", function () { sync(); input.focus(); });
+  });
+  sync();
+})();
+</script>
+{% endblock %}
