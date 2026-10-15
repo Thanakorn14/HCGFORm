@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}สร้างบัญชี{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <section class="auth-hero">
+    <p class="eyebrow">HCG Form</p>
+    <h1>สร้างบัญชีใหม่</h1>
+    <p class="lead">กรอกข้อมูลให้ครบถ้วน และป้อนรหัสจากรูปภาพเพื่อยืนยันตัวตน</p>
+    <ol class="steps">
+      <li><b>1</b><div><strong>ชื่อไอดี</strong><span>4-20 ตัว ภาษาอังกฤษ ตัวเลข จุด หรือขีดล่าง</span></div></li>
+      <li><b>2</b><div><strong>รหัสผ่าน</strong><span>อย่างน้อย 8 ตัว มีตัวอักษรและตัวเลข</span></div></li>
+      <li><b>3</b><div><strong>ยืนยันตัวตน</strong><span>ป้อนรหัสจากรูปภาพให้ถูกต้อง</span></div></li>
+    </ol>
+  </section>
+
+  <section class="auth-card glass">
+    <div>
+      <h2>สร้างบัญชี</h2>
+      <p class="muted">ทุกช่องจำเป็นต้องกรอก</p>
+    </div>
+    <form method="post" class="stack" autocomplete="off" id="register-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="username">ชื่อไอดี</label>
+        <input type="text" id="username" name="username" value="{{ form.username }}" required minlength="4" maxlength="20" pattern="[A-Za-z0-9_.]{4,20}" autocomplete="username" placeholder="เช่น somchai_01">
+      </div>
+      <div class="field">
+        <label for="email">อีเมล</label>
+        <input type="email" id="email" name="email" value="{{ form.email }}" required maxlength="254" autocomplete="email" placeholder="name@example.com">
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="password">รหัสผ่าน</label>
+          <div class="pass-wrap">
+            <input type="password" id="password" name="password" required minlength="8" maxlength="128" autocomplete="new-password">
+            <button type="button" class="pass-toggle" data-toggle-pass>แสดง</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="confirm">รหัสผ่านอีกครั้ง</label>
+          <div class="pass-wrap">
+            <input type="password" id="confirm" name="confirm" required minlength="8" maxlength="128" autocomplete="new-password">
+            <button type="button" class="pass-toggle" data-toggle-pass>แสดง</button>
+          </div>
+          <small class="field-hint" id="match-hint"></small>
+        </div>
+      </div>
+      <div class="field">
+        <label for="captcha">ป้อนรหัสจากรูปภาพ</label>
+        <div class="captcha-row">
+          <img id="captcha-img" src="{{ url_for('captcha', v=captcha_v) }}" alt="รูปรหัสยืนยันตัวตน" width="220" height="72">
+          <button type="button" class="btn ghost sm" id="captcha-refresh">เปลี่ยนรูป</button>
+        </div>
+        <input type="text" id="captcha" name="captcha" required maxlength="5" placeholder="พิมพ์ตัวอักษร 5 ตัวตามรูป" class="captcha-input" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      </div>
+      <button class="btn primary block" type="submit">สร้างบัญชี</button>
+    </form>
+    <p class="muted center switch-link">มีบัญชีอยู่แล้ว <a href="{{ url_for('login') }}">เข้าสู่ระบบ</a></p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var img = document.getElementById("captcha-img");
+  var captchaUrl = "{{ url_for('captcha') }}";
+  document.getElementById("captcha-refresh").addEventListener("click", function () {
+    img.src = captchaUrl + "?v=" + Date.now();
+    document.getElementById("captcha").value = "";
+    document.getElementById("captcha").focus();
+  });
+
+  var pw = document.getElementById("password");
+  var cf = document.getElementById("confirm");
+  var hint = document.getElementById("match-hint");
+  function check() {
+    if (!cf.value) { hint.textContent = ""; hint.className = "field-hint"; cf.setCustomValidity(""); return; }
+    var ok = pw.value === cf.value;
+    hint.textContent = ok ? "รหัสผ่านตรงกัน" : "รหัสผ่านไม่ตรงกัน";
+    hint.className = "field-hint " + (ok ? "ok" : "bad");
+    cf.setCustomValidity(ok ? "" : "รหัสผ่านไม่ตรงกัน");
+  }
+  pw.addEventListener("input", check);
+  cf.addEventListener("input", check);
+})();
+</script>
+{% endblock %}
