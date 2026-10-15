@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}ภาพรวม{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">{{ role_label(g.user.role) }}</p>
+    <h1>ภาพรวมระบบ</h1>
+  </div>
+  <a class="btn primary" href="{{ url_for('admin_form_new') }}">สร้างแบบฟอร์ม</a>
+</div>
+
+<div class="grid stats">
+  <div class="glass card stat"><span>บัญชีที่สมัครแล้ว</span><strong>{{ stats.users }}</strong><small>บัญชีผู้ใช้งานทั้งหมด</small></div>
+  <div class="glass card stat ok"><span>อนุมัติแล้ว</span><strong>{{ stats.approved }}</strong><small>บัญชี</small></div>
+  <div class="glass card stat bad"><span>ไม่อนุมัติ</span><strong>{{ stats.rejected }}</strong><small>บัญชี</small></div>
+  <div class="glass card stat wait"><span>กำลังรออนุมัติ</span><strong>{{ stats.pending }}</strong><small>บัญชี</small></div>
+</div>
+
+<div class="grid two">
+  <section class="glass card">
+    <div class="card-head">
+      <h2>ประวัติย้อนหลัง 30 วัน</h2>
+      <div class="legend"><span class="dot reg"></span>สมัครใหม่ <span class="dot sub"></span>ส่งแบบฟอร์ม</div>
+    </div>
+    <div class="chart" role="img" aria-label="กราฟสมัครใหม่และส่งแบบฟอร์ม 30 วัน">
+      {% for d in days %}
+      <div class="bar" title="{{ d.label }} : สมัคร {{ d.reg }} / ส่ง {{ d.sub }}">
+        <span class="b-sub" style="height: {{ d.h_sub }}%"></span>
+        <span class="b-reg" style="height: {{ d.h_reg }}%"></span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="chart-axis"><span>{{ days[0].label }}</span><span>{{ days[-1].label }}</span></div>
+    <div class="mini-stats">
+      <div><small>สมัครใหม่</small><strong>{{ totals.reg }}</strong></div>
+      <div><small>ส่งแบบฟอร์ม</small><strong>{{ totals.sub }}</strong></div>
+      <div><small>อนุมัติ</small><strong>{{ totals.app }}</strong></div>
+      <div><small>ไม่อนุมัติ</small><strong>{{ totals.rej }}</strong></div>
+    </div>
+  </section>
+
+  <section class="glass card">
+    <div class="card-head">
+      <h2>กิจกรรมล่าสุด</h2>
+      <a class="btn ghost sm" href="{{ url_for('admin_timeline') }}">ดูไทม์ไลน์</a>
+    </div>
+    {% if recent %}
+    <ul class="activity-list">
+      {% for a in recent %}
+      <li>
+        <span class="act-time">{{ a.created_at|thtime }}</span>
+        <span><strong>{{ a.actor or 'ระบบ' }}</strong> {{ a.detail }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">ยังไม่มีกิจกรรม</p>
+    {% endif %}
+    <div class="mini-stats two-col">
+      <div><small>แบบฟอร์มที่เปิดอยู่</small><strong>{{ stats.forms }}</strong></div>
+      <div><small>ส่งแบบฟอร์มทั้งหมด</small><strong>{{ stats.submissions }}</strong></div>
+    </div>
+  </section>
+</div>
+
+<section class="glass card">
+  <div class="card-head"><h2>สรุปรายวัน 30 วันล่าสุด</h2></div>
+  {% if active_days %}
+  <div class="table-scroll">
+    <table class="data responsive">
+      <thead><tr><th>วันที่</th><th>สมัครใหม่</th><th>ส่งแบบฟอร์ม</th><th>อนุมัติ</th><th>ไม่อนุมัติ</th></tr></thead>
+      <tbody>
+        {% for d in active_days %}
+        <tr>
+          <td data-label="วันที่">{{ d.label }}</td>
+          <td data-label="สมัครใหม่">{{ d.reg }}</td>
+          <td data-label="ส่งแบบฟอร์ม">{{ d.sub }}</td>
+          <td data-label="อนุมัติ">{{ d.app }}</td>
+          <td data-label="ไม่อนุมัติ">{{ d.rej }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">ยังไม่มีข้อมูลในช่วง 30 วันที่ผ่านมา</p>
+  {% endif %}
+</section>
+{% endblock %}
