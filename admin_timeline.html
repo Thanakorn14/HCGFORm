@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}ไทม์ไลน์ผู้ใช้งาน{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">ประวัติย้อนหลัง 30 วัน</p>
+    <h1>ไทม์ไลน์ผู้ใช้งาน</h1>
+  </div>
+  <form method="get" class="filter-form">
+    <select name="user" aria-label="เลือกผู้ใช้งาน" onchange="this.form.submit()">
+      <option value="">ผู้ใช้งานทั้งหมด</option>
+      {% for u in users %}
+        <option value="{{ u.id }}" {% if uid == u.id %}selected{% endif %}>{{ u.username }} - {{ role_label(u.role) }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button class="btn ghost sm" type="submit">กรอง</button></noscript>
+  </form>
+</div>
+
+{% if groups %}
+<div class="timeline">
+  {% for grp in groups %}
+  <section>
+    <h2 class="day-label">{{ grp.label }}</h2>
+    <div class="glass card">
+      <ul class="tl-list">
+        {% for a in grp.entries %}
+        <li class="tl-item">
+          <span class="tl-time">{{ a.created_at|thclock }}</span>
+          <span class="tl-dot {{ a.action }}"></span>
+          <div class="tl-body">
+            <p><strong>{{ a.actor or 'ไม่ทราบบัญชี' }}</strong>
+               <span class="pill soft">{{ action_label(a.action) }}</span>
+               {% if a.actor_role and a.actor_role != 'user' %}<span class="muted small">{{ role_label(a.actor_role) }}</span>{% endif %}</p>
+            <p class="muted">{{ a.detail }}</p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% else %}
+<section class="glass card empty-state"><h3>ไม่มีกิจกรรมในช่วง 30 วัน</h3></section>
+{% endif %}
+{% endblock %}
