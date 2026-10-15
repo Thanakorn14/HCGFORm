@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ form.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">{{ 'ส่งแบบฟอร์มใหม่' if resubmit else 'กรอกแบบฟอร์ม' }}</p>
+    <h1>{{ form.title }}</h1>
+    {% if form.description %}<p class="muted pre">{{ form.description }}</p>{% endif %}
+  </div>
+  <a class="btn ghost" href="{{ url_for('home') }}">ย้อนกลับ</a>
+</div>
+
+<p class="note">เมื่อกดส่งแล้วจะไม่สามารถแก้ไขคำตอบได้ กรุณาตรวจสอบให้เรียบร้อยก่อนส่ง</p>
+
+<form method="post" class="stack-lg narrow" id="fill" data-confirm="ยืนยันการส่งแบบฟอร์ม เมื่อส่งแล้วจะไม่สามารถแก้ไขได้">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  {% for q in questions %}
+  {% set name = 'q_' ~ q.id %}
+  <section class="glass card q-fill" data-q>
+    <p class="q-no">ข้อ {{ loop.index }}
+      <span class="pill soft">{{ qtype_label(q.qtype) }}</span>
+      {% if q.required %}<span class="req">จำเป็น</span>{% endif %}
+    </p>
+    <h3 class="pre">{{ q.text }}</h3>
+
+    {% if q.qtype == 'text' %}
+      <textarea name="{{ name }}" maxlength="5000" placeholder="พิมพ์คำตอบของคุณ" aria-label="คำตอบข้อ {{ loop.index }}" {% if q.required %}required{% endif %}>{{ values.get(name, '') }}</textarea>
+    {% elif q.qtype == 'truefalse' %}
+      <div class="tf-group">
+        {% for opt in tf_options %}
+          <input type="radio" id="{{ name }}_{{ loop.index }}" name="{{ name }}" value="{{ opt }}"
+                 {% if values.get(name) == opt %}checked{% endif %} {% if q.required %}required{% endif %}>
+          <label for="{{ name }}_{{ loop.index }}" class="tf-tile {{ 'is-true' if loop.first else 'is-false' }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="choice-group">
+        {% for opt in q.options %}
+          <label class="choice-tile">
+            <input type="radio" name="{{ name }}" value="{{ opt }}"
+                   {% if values.get(name) == opt %}checked{% endif %} {% if q.required %}required{% endif %}>
+            <span>{{ opt }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  <div class="submit-bar glass">
+    <span class="muted" id="progress">ตอบแล้ว 0 จาก {{ questions|length }} ข้อ</span>
+    <div class="actions">
+      <a class="btn ghost" href="{{ url_for('home') }}">ยกเลิก</a>
+      <button class="btn primary" type="submit">ส่งแบบฟอร์ม</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var form = document.getElementById("fill");
+  var out = document.getElementById("progress");
+  var cards = form.querySelectorAll("[data-q]");
+  function update() {
+    var done = 0;
+    cards.forEach(function (c) {
+      var t = c.querySelector("textarea");
+      if (t ? t.value.trim() !== "" : c.querySelector("input[type=radio]:checked")) done++;
+    });
+    out.textContent = "ตอบแล้ว " + done + " จาก " + cards.length + " ข้อ";
+  }
+  form.addEventListener("input", update);
+  form.addEventListener("change", update);
+  update();
+})();
+</script>
+{% endblock %}
