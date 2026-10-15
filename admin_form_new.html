@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}สร้างแบบฟอร์ม{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">แบบฟอร์มใหม่</p>
+    <h1>สร้างแบบฟอร์ม</h1>
+  </div>
+  <a class="btn ghost" href="{{ url_for('admin_forms') }}">ย้อนกลับ</a>
+</div>
+
+<form method="post" id="builder" class="builder">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="payload" id="payload">
+
+  <div class="builder-main stack-lg">
+    <section class="glass card stack">
+      <div class="field">
+        <label for="title">ชื่อแบบฟอร์ม</label>
+        <input type="text" id="title" name="title" value="{{ form_title }}" maxlength="200" required placeholder="เช่น แบบฟอร์มสมัครงาน">
+      </div>
+      <div class="field">
+        <label for="description">คำอธิบาย (ไม่บังคับ)</label>
+        <textarea id="description" name="description" maxlength="2000" placeholder="รายละเอียดสำหรับผู้กรอก">{{ form_desc }}</textarea>
+      </div>
+    </section>
+
+    <div id="questions" class="stack"></div>
+    <section class="glass card empty-state" id="empty-q">
+      <h3>ยังไม่มีคำถาม</h3>
+      <p class="muted">กดปุ่มประเภทคำถามเพื่อเพิ่มคำถาม</p>
+    </section>
+  </div>
+
+  <aside class="builder-side glass card">
+    <h3>เพิ่มคำถาม</h3>
+    <div class="add-buttons">
+      <button type="button" class="btn ghost" data-add="text">แบบตอบคำถาม</button>
+      <button type="button" class="btn ghost" data-add="truefalse">แบบแตะถูกผิด</button>
+      <button type="button" class="btn ghost" data-add="choice">แบบเลือกตอบ</button>
+    </div>
+    <p class="muted small side-count" id="q-count">0 คำถาม</p>
+    <button class="btn primary block" type="submit">บันทึกแบบฟอร์ม</button>
+  </aside>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var TYPE_LABEL = { text: "แบบตอบคำถาม", truefalse: "แบบแตะถูกผิด", choice: "แบบเลือกตอบ" };
+  var wrap = document.getElementById("questions");
+  var empty = document.getElementById("empty-q");
+  var counter = document.getElementById("q-count");
+  var initial = {{ payload|tojson }};
+
+  function addOption(card, value) {
+    var row = document.createElement("div");
+    row.className = "opt-row";
+    row.innerHTML = '<input type="text" class="opt" maxlength="300" placeholder="ตัวเลือก">' +
+                    '<button type="button" class="btn ghost sm" data-act="del-opt">ลบ</button>';
+    row.querySelector("input").value = value || "";
+    card.querySelector(".opt-list").appendChild(row);
+    return row;
+  }
+
+  function addQuestion(data) {
+    var q = Object.assign({ type: "text", text: "", required: true, options: [] }, data || {});
+    var card = document.createElement("section");
+    card.className = "glass card q-card";
+    card.dataset.type = q.type;
+    card.innerHTML =
+      '<div class="q-head">' +
+        '<div class="q-no"><span class="q-num"></span><span class="pill soft"></span></div>' +
+        '<div class="q-tools">' +
+          '<button type="button" class="btn ghost sm" data-act="up">ขึ้น</button>' +
+          '<button type="button" class="btn ghost sm" data-act="down">ลง</button>' +
+          '<button type="button" class="btn danger sm" data-act="remove">ลบ</button>' +
+        '</div>' +
+      '</div>' +
+      '<label class="field"><span>คำถาม</span>' +
+        '<textarea class="q-text" rows="2" maxlength="1000" placeholder="พิมพ์คำถาม"></textarea></label>' +
+      '<div class="q-body"></div>' +
+      '<label class="check"><input type="checkbox" class="q-req"> จำเป็นต้องตอบ</label>';
+    card.querySelector(".pill").textContent = TYPE_LABEL[q.type];
+    card.querySelector(".q-text").value = q.text;
+    card.querySelector(".q-req").checked = !!q.required;
+
+    var body = card.querySelector(".q-body");
+    if (q.type === "text") {
+      body.innerHTML = '<div class="preview">ผู้ใช้งานจะพิมพ์คำตอบลงในช่องข้อความ</div>';
+    } else if (q.type === "truefalse") {
+      body.innerHTML = '<div class="tf-preview"><span class="is-true">ถูก</span><span class="is-false">ผิด</span></div>';
+    } else {
+      body.innerHTML = '<div class="opt-list"></div>' +
+                       '<button type="button" class="btn ghost sm" data-act="add-opt">เพิ่มตัวเลือก</button>';
+      var opts = q.options && q.options.length ? q.options : ["", ""];
+      opts.forEach(function (o) { addOption(card, o); });
+    }
+    wrap.appendChild(card);
+    refresh();
+    return card;
+  }
+
+  function refresh() {
+    Array.prototype.forEach.call(wrap.children, function (c, i) {
+      c.querySelector(".q-num").textContent = "ข้อ " + (i + 1);
+    });
+    empty.hidden = wrap.children.length > 0;
+    counter.textContent = wrap.children.length + " คำถาม";
+  }
+
+  wrap.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    var card = btn.closest(".q-card");
+    switch (btn.dataset.act) {
+      case "remove":
+        if (confirm("ลบคำถามนี้")) card.remove();
+        break;
+      case "up":
+        if (card.previousElementSibling) wrap.insertBefore(card, card.previousElementSibling);
+        break;
+      case "down":
+        if (card.nextElementSibling) wrap.insertBefore(card.nextElementSibling, card);
+        break;
+      case "add-opt":
+        addOption(card, "").querySelector("input").focus();
+        break;
+      case "del-opt":
+        if (card.querySelectorAll(".opt-row").length > 2) btn.closest(".opt-row").remove();
+        else alert("แบบเลือกตอบต้องมีอย่างน้อย 2 ตัวเลือก");
+        break;
+    }
+    refresh();
+  });
+
+  document.querySelectorAll("[data-add]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var card = addQuestion({ type: b.dataset.add });
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.querySelector(".q-text").focus({ preventScroll: true });
+    });
+  });
+
+  document.getElementById("builder").addEventListener("submit", function (e) {
+    var data = Array.prototype.map.call(wrap.children, function (c) {
+      return {
+        type: c.dataset.type,
+        text: c.querySelector(".q-text").value.trim(),
+        required: c.querySelector(".q-req").checked,
+        options: Array.prototype.map.call(c.querySelectorAll(".opt"), function (i) { return i.value.trim(); })
+                   .filter(function (v) { return v; })
+      };
+    });
+    if (!data.length) { e.preventDefault(); alert("กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อ"); return; }
+    for (var i = 0; i < data.length; i++) {
+      if (!data[i].text) { e.preventDefault(); alert("ข้อ " + (i + 1) + ": กรุณาพิมพ์คำถาม"); return; }
+      if (data[i].type === "choice" && data[i].options.length < 2) {
+        e.preventDefault(); alert("ข้อ " + (i + 1) + ": แบบเลือกตอบต้องมีอย่างน้อย 2 ตัวเลือก"); return;
+      }
+    }
+    document.getElementById("payload").value = JSON.stringify(data);
+  });
+
+  initial.forEach(addQuestion);
+  refresh();
+})();
+</script>
+{% endblock %}
