@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}คำขออนุมัติ{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">{{ 'แบบฟอร์ม: ' ~ form.title if form else 'ทุกแบบฟอร์ม' }}</p>
+    <h1>คำขออนุมัติ</h1>
+  </div>
+  {% if form %}<a class="btn ghost" href="{{ url_for('admin_submissions') }}">ดูทุกแบบฟอร์ม</a>{% endif %}
+</div>
+
+<nav class="tabs glass" aria-label="สถานะ">
+  {% for key, label in [('pending', 'กำลังรออนุมัติ'), ('approved', 'อนุมัติ'), ('rejected', 'ไม่อนุมัติ'), ('all', 'ทั้งหมด')] %}
+    <a href="{{ url_for('admin_submissions', status=key, form=form_id) }}" class="{{ 'active' if status == key }}">
+      {{ label }} <span class="count">{{ counts[key] }}</span>
+    </a>
+  {% endfor %}
+</nav>
+
+<section class="glass card">
+  {% if rows %}
+  <div class="table-scroll">
+    <table class="data responsive">
+      <thead><tr><th>เลขที่</th><th>ผู้ใช้งาน</th><th>แบบฟอร์ม</th><th>ส่งเมื่อ</th><th>สถานะ</th><th></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td data-label="เลขที่">{{ r.id }}</td>
+          <td data-label="ผู้ใช้งาน"><span class="cell-stack"><strong>{{ r.username }}</strong><span class="muted small">{{ r.email }}</span></span></td>
+          <td data-label="แบบฟอร์ม">{{ r.title }}</td>
+          <td data-label="ส่งเมื่อ">{{ r.created_at|thtime }}</td>
+          <td data-label="สถานะ"><span class="pill {{ r.status }}">{{ status_label(r.status) }}</span></td>
+          <td class="td-action"><a class="btn {{ 'primary' if r.status == 'pending' else 'ghost' }} sm" href="{{ url_for('admin_review', sid=r.id) }}">ตรวจสอบ</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><h3>ไม่มีรายการ</h3><p class="muted">ยังไม่มีคำขอในสถานะนี้</p></div>
+  {% endif %}
+</section>
+{% endblock %}
