@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ sub.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">{{ 'ตรวจสอบคำขอเลขที่ ' ~ sub.id if review else 'คำตอบของฉัน' }}</p>
+    <h1>{{ sub.title }}</h1>
+    <p class="muted">ส่งเมื่อ {{ sub.created_at|thtime }}{% if review %} โดย {{ sub.username }} ({{ sub.email }}){% endif %}</p>
+  </div>
+  <a class="btn ghost" href="{{ url_for('admin_submissions') if review else url_for('history') }}">ย้อนกลับ</a>
+</div>
+
+<section class="glass card status-card narrow {{ sub.status }}">
+  {% if sub.status == 'pending' %}
+    <button class="btn status-btn pending" type="button" disabled>กำลังรออนุมัติ</button>
+    <p class="muted">แบบฟอร์มอยู่ระหว่างการตรวจสอบโดยผู้ดูแลระบบ</p>
+  {% elif sub.status == 'rejected' %}
+    <button class="btn status-btn rejected" type="button" disabled>ไม่อนุมัติ</button>
+    <div class="reason">
+      <strong>ปัญหาที่ไม่อนุมัติ</strong>
+      <p class="pre">{{ sub.reason }}</p>
+    </div>
+    {% if can_resubmit %}
+      <a class="btn primary" href="{{ url_for('fill_form', form_id=sub.form_id) }}">ส่งแบบฟอร์มใหม่</a>
+    {% endif %}
+  {% else %}
+    <button class="btn status-btn approved" type="button" disabled>อนุมัติ</button>
+    <p>โปรดกดลิงก์ข้างล่างเพื่อไปยังขั้นต่อไป</p>
+    <a class="btn primary" href="{{ sub.link }}" target="_blank" rel="noopener noreferrer">ไปยังขั้นตอนถัดไป</a>
+    <a class="next-link" href="{{ sub.link }}" target="_blank" rel="noopener noreferrer">{{ sub.link }}</a>
+  {% endif %}
+  {% if sub.reviewed_at %}
+    <p class="muted small">ตรวจสอบโดย {{ sub.reviewer or '-' }} เมื่อ {{ sub.reviewed_at|thtime }}</p>
+  {% endif %}
+</section>
+
+{% if review %}
+<section class="glass card review-panel narrow">
+  <h2>พิจารณาคำขอ</h2>
+  {% if sub.status != 'pending' %}<p class="muted small">คำขอนี้พิจารณาแล้ว หากบันทึกใหม่ ผลเดิมจะถูกแทนที่</p>{% endif %}
+  <div class="review-grid">
+    <form method="post" class="stack review-box approve" data-confirm="ยืนยันการอนุมัติและส่งลิงก์ให้ผู้ใช้งาน">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="approve">
+      <h3>อนุมัติ</h3>
+      <div class="field">
+        <label for="link">ลิงก์สำหรับขั้นตอนถัดไป</label>
+        <input type="url" id="link" name="link" placeholder="https://" value="{{ draft.link }}" maxlength="1000" required>
+      </div>
+      <button class="btn success block" type="submit">อนุมัติและส่งลิงก์</button>
+    </form>
+    <form method="post" class="stack review-box reject" data-confirm="ยืนยันการไม่อนุมัติคำขอนี้">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="reject">
+      <h3>ไม่อนุมัติ</h3>
+      <div class="field">
+        <label for="reason">ปัญหาที่ไม่อนุมัติ</label>
+        <textarea id="reason" name="reason" maxlength="2000" placeholder="ระบุปัญหาให้ผู้ใช้งานทราบ" required>{{ draft.reason }}</textarea>
+      </div>
+      <button class="btn danger block" type="submit">ไม่อนุมัติ</button>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<p class="note narrow">{{ 'คำตอบของผู้ใช้งาน (อ่านอย่างเดียว)' if review else 'คำตอบที่ส่งแล้ว ไม่สามารถแก้ไขได้' }}</p>
+<div class="stack narrow">
+  {% for a in answers %}
+  <article class="glass card answer">
+    <p class="q-no">ข้อ {{ loop.index }} <span class="pill soft">{{ qtype_label(a.qtype) }}</span></p>
+    <h3 class="pre">{{ a.text }}</h3>
+    <div class="answer-box {{ 'empty' if not a.value }}">{{ a.value if a.value else 'ไม่ได้ตอบ' }}</div>
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}
